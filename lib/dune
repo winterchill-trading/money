@@ -1,0 +1,6 @@
+(library
+ (name money)
+ (public_name money)
+ (libraries core zarith fixed-decimal yojson)
+ (preprocess
+  (pps ppx_jane ppx_yojson_conv)))
