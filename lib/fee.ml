@@ -61,7 +61,7 @@ let validate t =
   let%bind () =
     if t.bps >= 0
     then Ok ()
-    else Or_error.error_s [%message "fee: negative bps" (t.bps : int)]
+    else Or_error.error_s [%message "fee: negative bps" ~bps:(t.bps : int)]
   in
   match t.min, t.max with
   | Some lo, Some hi when Amount.(lo > hi) ->
