@@ -30,21 +30,7 @@ let minor_units_int t = if Z.fits_int t.units then Some (Z.to_int t.units) else 
 let pow10 n = Z.pow (Z.of_int 10) n
 
 let to_decimal_string t =
-  let e = Currency.exponent t.currency in
-  let digits = Z.to_string (Z.abs t.units) in
-  let body =
-    if e = 0
-    then digits
-    else (
-      let digits =
-        if String.length digits <= e
-        then String.make (e + 1 - String.length digits) '0' ^ digits
-        else digits
-      in
-      let n = String.length digits in
-      String.sub digits ~pos:0 ~len:(n - e) ^ "." ^ String.sub digits ~pos:(n - e) ~len:e)
-  in
-  if Z.sign t.units < 0 then "-" ^ body else body
+  Decimal_text.to_string t.units ~digits:(Currency.exponent t.currency)
 ;;
 
 let to_string t = to_decimal_string t ^ " " ^ Currency.to_string t.currency
