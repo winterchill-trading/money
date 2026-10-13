@@ -1,0 +1,8 @@
+(library
+ (name money_test)
+ (libraries core money zarith)
+ (inline_tests
+  (flags
+   (:standard -source-tree-root .)))
+ (preprocess
+  (pps ppx_jane)))
