@@ -29,6 +29,7 @@ let network t = t.network
 let exponent t = t.exponent
 let kind t = t.kind
 let to_string t = t.id
+
 let make_id ~code ~network =
   match network with
   | None -> code
@@ -47,14 +48,17 @@ let of_string s = Or_error.ok_exn (of_string_or_error s)
 
 let valid_code code =
   let n = String.length code in
-  n >= 2 && n <= 12 && String.for_all code ~f:(fun c -> Char.is_uppercase c || Char.is_digit c)
+  n >= 2
+  && n <= 12
+  && String.for_all code ~f:(fun c -> Char.is_uppercase c || Char.is_digit c)
 ;;
 
 let valid_network network =
   let n = String.length network in
   n >= 1
   && n <= 32
-  && String.for_all network ~f:(fun c -> Char.is_lowercase c || Char.is_digit c || Char.equal c '-')
+  && String.for_all network ~f:(fun c ->
+    Char.is_lowercase c || Char.is_digit c || Char.equal c '-')
 ;;
 
 let register ~code ?network ~exponent ~kind () =
@@ -78,8 +82,9 @@ let register ~code ?network ~exponent ~kind () =
   let%bind () =
     match kind, network with
     | Kind.Fiat, Some _ -> Or_error.error_s [%message "fiat currency with a network" code]
-    | Kind.Fiat, None when String.length code <> 3 || not (String.for_all code ~f:Char.is_alpha)
-      -> Or_error.error_s [%message "fiat code must be three letters" code]
+    | Kind.Fiat, None
+      when String.length code <> 3 || not (String.for_all code ~f:Char.is_alpha) ->
+      Or_error.error_s [%message "fiat code must be three letters" code]
     | _ -> Ok ()
   in
   let id = make_id ~code ~network in
@@ -106,15 +111,50 @@ let builtin ~code ?network ~exponent kind =
   Or_error.ok_exn (register ~code ?network ~exponent ~kind ())
 ;;
 
-(* ISO 4217 minor units. Codes with exponent 0 or 3 are the ones most often gotten
-   wrong; the rest are 2. *)
+(* ISO 4217 minor units. Codes with exponent 0 or 3 are the ones most often gotten wrong;
+   the rest are 2. *)
 let () =
   List.iter
-    [ "AED", 2; "AUD", 2; "BGN", 2; "BHD", 3; "BRL", 2; "CAD", 2; "CHF", 2; "CLP", 0
-    ; "CNY", 2; "CZK", 2; "DKK", 2; "EUR", 2; "GBP", 2; "HKD", 2; "HUF", 2; "IDR", 2
-    ; "ILS", 2; "INR", 2; "ISK", 0; "JOD", 3; "JPY", 0; "KRW", 0; "KWD", 3; "MXN", 2
-    ; "NOK", 2; "NZD", 2; "OMR", 3; "PHP", 2; "PLN", 2; "RON", 2; "SAR", 2; "SEK", 2
-    ; "SGD", 2; "THB", 2; "TND", 3; "TRY", 2; "UAH", 2; "USD", 2; "VND", 0; "ZAR", 2
+    [ "AED", 2
+    ; "AUD", 2
+    ; "BGN", 2
+    ; "BHD", 3
+    ; "BRL", 2
+    ; "CAD", 2
+    ; "CHF", 2
+    ; "CLP", 0
+    ; "CNY", 2
+    ; "CZK", 2
+    ; "DKK", 2
+    ; "EUR", 2
+    ; "GBP", 2
+    ; "HKD", 2
+    ; "HUF", 2
+    ; "IDR", 2
+    ; "ILS", 2
+    ; "INR", 2
+    ; "ISK", 0
+    ; "JOD", 3
+    ; "JPY", 0
+    ; "KRW", 0
+    ; "KWD", 3
+    ; "MXN", 2
+    ; "NOK", 2
+    ; "NZD", 2
+    ; "OMR", 3
+    ; "PHP", 2
+    ; "PLN", 2
+    ; "RON", 2
+    ; "SAR", 2
+    ; "SEK", 2
+    ; "SGD", 2
+    ; "THB", 2
+    ; "TND", 3
+    ; "TRY", 2
+    ; "UAH", 2
+    ; "USD", 2
+    ; "VND", 0
+    ; "ZAR", 2
     ]
     ~f:(fun (code, exponent) -> ignore (builtin ~code ~exponent Fiat : t))
 ;;
@@ -136,7 +176,6 @@ let usdc_polygon = builtin ~code:"USDC" ~network:"polygon" ~exponent:6 Crypto
 let usdc_solana = builtin ~code:"USDC" ~network:"solana" ~exponent:6 Crypto
 let usdt_ethereum = builtin ~code:"USDT" ~network:"ethereum" ~exponent:6 Crypto
 let usdt_tron = builtin ~code:"USDT" ~network:"tron" ~exponent:6 Crypto
-
 let sexp_of_t t = Sexp.Atom t.id
 
 let t_of_sexp sexp =

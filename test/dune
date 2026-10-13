@@ -1,6 +1,6 @@
 (library
  (name money_test)
- (libraries core money zarith)
+ (libraries core money zarith yojson)
  (inline_tests
   (flags
    (:standard -source-tree-root .)))
