@@ -86,6 +86,31 @@ val mul_ratio : ?rounding:Rounding.t -> t -> Q.t -> t
 (** [mul_bps t ~bps] is [t * bps / 10_000], rounded like [mul_ratio]. *)
 val mul_bps : ?rounding:Rounding.t -> t -> bps:int -> t
 
+(** {2 Allocation}
+
+    Dividing an amount without creating or losing a minor unit. The parts always sum to
+    the original amount, every part has its currency, and each part is within one minor
+    unit of its exact share. *)
+
+(** [allocate t ~ratios] divides [t] in proportion to [ratios] with the largest remainder
+    method: each part first gets its exact share rounded toward zero, then the minor units
+    left over go one at a time to the parts with the largest discarded remainder, ties
+    going to the earlier part. A ratio of [0] always gets zero. The result has one part
+    per ratio, in order. The parts of a negative amount are the negated parts of its
+    absolute value.
+
+    {[
+      allocate (Amount.of_string "100.00 EUR") ~ratios:[ 1; 1; 1 ]
+      (* Ok [ 33.34 EUR; 33.33 EUR; 33.33 EUR ] *)
+    ]}
+
+    Fails when [ratios] is empty, contains a negative number, or sums to zero. *)
+val allocate : t -> ratios:int list -> t list Or_error.t
+
+(** [split t ~parts] is [allocate t ~ratios:[1; ...; 1]] with [parts] ones: equal parts,
+    with the leftover minor units on the first parts. Fails unless [parts >= 1]. *)
+val split : t -> parts:int -> t list Or_error.t
+
 (** {2 Rationals and fixed-point values} *)
 
 (** The value in major units, e.g. [1234/100] for ["12.34 EUR"]. *)

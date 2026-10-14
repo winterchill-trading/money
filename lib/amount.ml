@@ -135,6 +135,50 @@ let mul_bps ?rounding t ~bps =
   mul_ratio ?rounding t (Q.make (Z.of_int bps) (Z.of_int 10_000))
 ;;
 
+let allocate t ~ratios =
+  let total = List.fold ratios ~init:Z.zero ~f:(fun acc r -> Z.add acc (Z.of_int r)) in
+  if List.is_empty ratios
+  then Or_error.error_s [%message "allocate: no ratios"]
+  else if List.exists ratios ~f:(fun r -> r < 0)
+  then Or_error.error_s [%message "allocate: negative ratio" (ratios : int list)]
+  else if Z.equal total Z.zero
+  then Or_error.error_s [%message "allocate: ratios sum to zero" (ratios : int list)]
+  else (
+    (* Largest remainder (Hamilton) method on the absolute value: every part gets the
+       floor of its exact share, and the units left over go one each to the parts with the
+       largest remainders, earlier parts first on ties. Working on the absolute value
+       makes the split of [-x] the negation of the split of [x]. *)
+    let units = Z.abs t.units in
+    let shares =
+      List.mapi ratios ~f:(fun i r ->
+        let q, rem = Z.div_rem (Z.mul units (Z.of_int r)) total in
+        i, q, rem)
+    in
+    let floor_sum = List.fold shares ~init:Z.zero ~f:(fun acc (_, q, _) -> Z.add acc q) in
+    (* Fewer than [List.length ratios] units are left, so this fits in an int. *)
+    let leftover = Z.to_int (Z.sub units floor_sum) in
+    let bumped =
+      List.sort shares ~compare:(fun (i, _, r) (j, _, s) ->
+        match Z.compare s r with
+        | 0 -> Int.compare i j
+        | c -> c)
+      |> Fn.flip List.take leftover
+      |> List.map ~f:(fun (i, _, _) -> i)
+      |> Int.Set.of_list
+    in
+    let negative = Z.sign t.units < 0 in
+    Ok
+      (List.map shares ~f:(fun (i, q, _) ->
+         let q = if Set.mem bumped i then Z.succ q else q in
+         { t with units = (if negative then Z.neg q else q) })))
+;;
+
+let split t ~parts =
+  if parts < 1
+  then Or_error.error_s [%message "split: parts must be positive" (parts : int)]
+  else allocate t ~ratios:(List.init parts ~f:(Fn.const 1))
+;;
+
 let to_q t = Q.make t.units (pow10 (Currency.exponent t.currency))
 
 let of_q ?(rounding = Rounding.default) currency q =
