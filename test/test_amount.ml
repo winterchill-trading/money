@@ -252,3 +252,37 @@ let%test_unit "basis points stay within one minor unit of the exact product" =
       let got = Q.of_bigint (Amount.minor_units (Amount.mul_bps ~rounding a ~bps)) in
       assert (Q.lt (Q.abs (Q.sub got exact)) Q.one))
 ;;
+
+let%expect_test "fractional basis points" =
+  let show bps rounding =
+    print_endline
+      (Amount.to_string
+         (Amount.mul_bps_q
+            ~rounding
+            (Amount.of_string "1000.00 EUR")
+            ~bps:(Q.of_string bps)))
+  in
+  show "1/2" Down;
+  show "2.75" Half_even;
+  show "1/3" Down;
+  show "1/3" Up;
+  [%expect {|
+    0.05 EUR
+    0.28 EUR
+    0.03 EUR
+    0.04 EUR
+    |}]
+;;
+
+let%test_unit "whole basis points agree with mul_bps" =
+  Quickcheck.test
+    (Quickcheck.Generator.tuple3
+       Amount.quickcheck_generator
+       (Int.gen_incl (-20_000) 20_000)
+       Rounding.quickcheck_generator)
+    ~sexp_of:[%sexp_of: Amount.t * int * Rounding.t]
+    ~f:(fun (a, bps, rounding) ->
+      [%test_result: Amount.t]
+        ~expect:(Amount.mul_bps ~rounding a ~bps)
+        (Amount.mul_bps_q ~rounding a ~bps:(Q.of_int bps)))
+;;
