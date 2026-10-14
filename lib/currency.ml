@@ -36,10 +36,13 @@ let make_id ~code ~network =
   | Some network -> code ^ "@" ^ network
 ;;
 
-let registry : t String.Table.t = String.Table.create ()
+(* An immutable map behind an atomic reference: readers never lock and always see a
+   complete map, writers publish a new map with compare-and-set. Safe across domains and
+   systhreads. *)
+let registry : t String.Map.t Stdlib.Atomic.t = Stdlib.Atomic.make String.Map.empty
 
 let of_string_or_error s =
-  match Hashtbl.find registry s with
+  match Map.find (Stdlib.Atomic.get registry) s with
   | Some t -> Ok t
   | None -> Or_error.error_s [%message "unknown currency" s]
 ;;
@@ -89,23 +92,28 @@ let register ~code ?network ~exponent ~kind () =
   in
   let id = make_id ~code ~network in
   let t = { id; code; network; exponent; kind } in
-  match Hashtbl.find registry id with
-  | None ->
-    Hashtbl.set registry ~key:id ~data:t;
-    Ok t
-  | Some existing ->
-    if Int.equal existing.exponent exponent && Kind.equal existing.kind kind
-    then Ok existing
-    else
-      Or_error.error_s
-        [%message
-          "currency already registered differently"
-            id
-            ~registered_exponent:(existing.exponent : int)
-            ~registered_kind:(existing.kind : Kind.t)]
+  let rec publish () =
+    let current = Stdlib.Atomic.get registry in
+    match Map.find current id with
+    | Some existing ->
+      if Int.equal existing.exponent exponent && Kind.equal existing.kind kind
+      then Ok existing
+      else
+        Or_error.error_s
+          [%message
+            "currency already registered differently"
+              id
+              ~registered_exponent:(existing.exponent : int)
+              ~registered_kind:(existing.kind : Kind.t)]
+    | None ->
+      if Stdlib.Atomic.compare_and_set registry current (Map.set current ~key:id ~data:t)
+      then Ok t
+      else publish ()
+  in
+  publish ()
 ;;
 
-let all () = Hashtbl.data registry |> List.sort ~compare
+let all () = Map.data (Stdlib.Atomic.get registry)
 
 let builtin ~code ?network ~exponent kind =
   Or_error.ok_exn (register ~code ?network ~exponent ~kind ())
