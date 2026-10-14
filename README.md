@@ -180,6 +180,8 @@ Nothing is published yet. The plan for a release, once the dependencies are on o
 
 `fixed-decimal` must be published first.
 
+API docs are built with `dune build @doc` (odoc). CI fails on any odoc warning, so run it before tagging.
+
 ## Used by
 
 `ledger`, `payments-core`, `card-core`, `risk-rules` and `banking-provider` in the
