@@ -21,13 +21,21 @@ type t [@@deriving sexp, compare, equal, hash]
     currencies match first. *)
 include Comparable.S with type t := t
 
+(** The currency of the amount. *)
 val currency : t -> Currency.t
 
 (** {2 Construction} *)
 
+(** [zero currency] is nothing of [currency]. *)
 val zero : Currency.t -> t
+
+(** [of_minor_units Currency.eur (Z.of_int 1234)] is ["12.34 EUR"]. *)
 val of_minor_units : Currency.t -> Z.t -> t
+
+(** [of_minor_units] for a machine integer. *)
 val of_minor_units_int : Currency.t -> int -> t
+
+(** The value as an integer count of minor units: [1234] for ["12.34 EUR"]. *)
 val minor_units : t -> Z.t
 
 (** [None] when the value does not fit in an [int]. *)
@@ -44,15 +52,20 @@ val to_decimal_string : t -> string
 (** ["12.34 EUR"]. *)
 val to_string : t -> string
 
-(** Parses [to_string] output. *)
+(** Parses [to_string] output: a decimal, one space and a registered currency. *)
 val of_string_or_error : string -> t Or_error.t
 
+(** [of_string_or_error] that raises on malformed input or an unknown currency. *)
 val of_string : string -> t
 
 (** {2 Predicates} *)
 
 val is_zero : t -> bool
+
+(** Strictly greater than zero. *)
 val is_positive : t -> bool
+
+(** Strictly less than zero. *)
 val is_negative : t -> bool
 
 (** -1, 0 or 1. *)
@@ -60,14 +73,22 @@ val sign : t -> int
 
 (** {2 Arithmetic} *)
 
+(** The same amount with the opposite sign. *)
 val neg : t -> t
+
+(** The absolute value. *)
 val abs : t -> t
 
-(** Fails when the currencies differ. *)
+(** [add a b] is [a + b]. Fails when the currencies differ. *)
 val add : t -> t -> t Or_error.t
 
+(** [sub a b] is [a - b]. Fails when the currencies differ. *)
 val sub : t -> t -> t Or_error.t
+
+(** [add] that raises when the currencies differ. *)
 val add_exn : t -> t -> t
+
+(** [sub] that raises when the currencies differ. *)
 val sub_exn : t -> t -> t
 
 (** [sum currency ts] is [zero currency] for an empty list. Fails if any element has
@@ -139,17 +160,20 @@ val of_fixed_decimal
 (** {2 Serialization} *)
 
 (** JSON object with string fields, never JSON numbers:
-    [{"amount": "12.34", "currency": "EUR"}]. *)
+    [{"amount": "12.34", "currency": "EUR"}]. [t_of_yojson] raises on any other shape, an
+    unknown currency or too many fractional digits. *)
 include Ppx_yojson_conv_lib.Yojsonable.S with type t := t
 
 (** Amounts over the built-in currencies, including ETH values wider than 63 bits. *)
 val quickcheck_generator : t Quickcheck.Generator.t
 
+(** Does not shrink. *)
 val quickcheck_shrinker : t Quickcheck.Shrinker.t
 
 (** Amounts of one currency. *)
 val quickcheck_generator_in : Currency.t -> t Quickcheck.Generator.t
 
+(** Versioned serializers whose bin_prot shape never changes. *)
 module Stable : sig
   module V1 : sig
     (** Bin_prot: the currency's text form and the minor units as a decimal string. Sexp:
