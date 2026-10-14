@@ -55,7 +55,11 @@ let fee =
       "money fee \"100.00 EUR\" -fixed 0.25 -bps 150 -min 0.30 -max 25 -side receivable")
     (let%map_open.Command amount = anon ("AMOUNT" %: amount_arg)
      and fixed = flag "fixed" (optional string) ~doc:"DECIMAL fixed part"
-     and bps = flag "bps" (optional_with_default 0 int) ~doc:"N basis points (default 0)"
+     and bps =
+       flag
+         "bps"
+         (optional_with_default "0" string)
+         ~doc:"BPS basis points, whole, decimal (0.5) or fraction (1/3); default 0"
      and min = flag "min" (optional string) ~doc:"DECIMAL minimum fee"
      and max = flag "max" (optional string) ~doc:"DECIMAL maximum fee"
      and side =
@@ -67,12 +71,13 @@ let fee =
      fun () ->
        let currency = Amount.currency amount in
        let dec s = ok_or_exit (Amount.of_decimal_string currency s) in
+       let bps_q = ok_or_exit (Rate.price_of_string bps) in
        let schedule =
          ok_or_exit
            (Fee.create
               currency
               ?fixed:(Option.map fixed ~f:dec)
-              ~bps
+              ~bps_q
               ?min:(Option.map min ~f:dec)
               ?max:(Option.map max ~f:dec))
        in
