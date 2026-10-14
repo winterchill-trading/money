@@ -1,0 +1,11 @@
+; A separate test library, so freezing the registry here cannot affect the other tests,
+; which register currencies of their own.
+
+(library
+ (name money_test_frozen)
+ (libraries core money)
+ (inline_tests
+  (flags
+   (:standard -source-tree-root .)))
+ (preprocess
+  (pps ppx_jane)))
