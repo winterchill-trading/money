@@ -27,19 +27,28 @@
  (tags
   (money currency decimal finance payments oxcaml))
  (depends
-  (ocaml-variants
+  oxcaml
+  (ocaml
    (and
-    (>= 5.2.0+ox)
-    (< 5.2.1~)))
+    (>= 5.2.0)
+    (< 5.3~)))
   dune
   (core
-   (>= v0.18~preview))
+   (and
+    (>= v0.18~preview.130.106+341)
+    (< v0.19~)))
   (ppx_jane
-   (>= v0.18~preview))
+   (and
+    (>= v0.18~preview.130.106+341)
+    (< v0.19~)))
   (ppx_yojson_conv
-   (>= v0.18~preview))
+   (and
+    (>= v0.18~preview.130.106+341)
+    (< v0.19~)))
   (ppx_yojson_conv_lib
-   (>= v0.18~preview))
+   (and
+    (>= v0.18~preview.130.106+341)
+    (< v0.19~)))
   (yojson
    (>= 2.0.0))
   (zarith
@@ -55,17 +64,24 @@
  (tags
   (money currency cli oxcaml))
  (depends
-  (ocaml-variants
+  oxcaml
+  (ocaml
    (and
-    (>= 5.2.0+ox)
-    (< 5.2.1~)))
+    (>= 5.2.0)
+    (< 5.3~)))
   dune
   (money
    (= :version))
   (core
-   (>= v0.18~preview))
+   (and
+    (>= v0.18~preview.130.106+341)
+    (< v0.19~)))
   (core_unix
-   (>= v0.18~preview))
+   (and
+    (>= v0.18~preview.130.106+341)
+    (< v0.19~)))
   (ppx_jane
-   (>= v0.18~preview))
+   (and
+    (>= v0.18~preview.130.106+341)
+    (< v0.19~)))
   (odoc :with-doc)))

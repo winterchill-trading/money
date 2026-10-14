@@ -11,12 +11,13 @@ homepage: "https://github.com/winterchill-trading/money"
 doc: "https://github.com/winterchill-trading/money#readme"
 bug-reports: "https://github.com/winterchill-trading/money/issues"
 depends: [
-  "ocaml-variants" {>= "5.2.0+ox" & < "5.2.1~"}
+  "oxcaml"
+  "ocaml" {>= "5.2.0" & < "5.3~"}
   "dune" {>= "3.17"}
   "money" {= version}
-  "core" {>= "v0.18~preview"}
-  "core_unix" {>= "v0.18~preview"}
-  "ppx_jane" {>= "v0.18~preview"}
+  "core" {>= "v0.18~preview.130.106+341" & < "v0.19~"}
+  "core_unix" {>= "v0.18~preview.130.106+341" & < "v0.19~"}
+  "ppx_jane" {>= "v0.18~preview.130.106+341" & < "v0.19~"}
   "odoc" {with-doc}
 ]
 build: [
@@ -34,3 +35,4 @@ build: [
   ]
 ]
 dev-repo: "git+https://github.com/winterchill-trading/money.git"
+x-maintenance-intent: ["(latest)"]
