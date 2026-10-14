@@ -110,7 +110,7 @@ let%expect_test "fractional basis points" =
       Amount.to_string (Or_error.ok_exn (Fee.compute f ~side (a "1000.00 EUR")))
     in
     printf
-      "%-5s payable %s receivable %s sexp %s json %s\n"
+      "%-5s payable %s receivable %s bps_q %s json %s\n"
       bps
       (compute Payable)
       (compute Receivable)
@@ -122,9 +122,9 @@ let%expect_test "fractional basis points" =
       , (Fee.create Currency.eur ~bps_q:(Q.of_ints (-1) 2) : Fee.t Or_error.t)];
   [%expect
     {|
-    1/2   payable 0.05 EUR receivable 0.05 EUR sexp 1/2 json {"currency":"EUR","fixed":"0.00","bps":"0.5","min":null,"max":null}
-    2.75  payable 0.27 EUR receivable 0.28 EUR sexp 11/4 json {"currency":"EUR","fixed":"0.00","bps":"2.75","min":null,"max":null}
-    1/3   payable 0.03 EUR receivable 0.04 EUR sexp 1/3 json {"currency":"EUR","fixed":"0.00","bps":"1/3","min":null,"max":null}
+    1/2   payable 0.05 EUR receivable 0.05 EUR bps_q 1/2 json {"currency":"EUR","fixed":"0.00","bps":"0.5","min":null,"max":null}
+    2.75  payable 0.27 EUR receivable 0.28 EUR bps_q 11/4 json {"currency":"EUR","fixed":"0.00","bps":"2.75","min":null,"max":null}
+    1/3   payable 0.03 EUR receivable 0.04 EUR bps_q 1/3 json {"currency":"EUR","fixed":"0.00","bps":"1/3","min":null,"max":null}
     ((Error "fee: give bps or bps_q, not both")
      (Error ("fee: negative bps" (bps -1/2))))
     |}]
@@ -157,7 +157,7 @@ let%expect_test "every form round-trips fractional basis points; V1 refuses them
   [%expect
     {|
     ((currency EUR) (fixed "0.10 EUR") (bps 1/3) (min ()) (max ()))
-    8a3bcb33f3d3cf0e0ba7fa8f3b5d7e4c
+    8a976e8a11158e58f2bd5a0221ffd209
     true
     ((currency EUR) (fixed "0.25 EUR") (bps 150) (min ()) (max ()))
     |}]
