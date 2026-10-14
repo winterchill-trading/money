@@ -18,6 +18,7 @@
 
 open! Core
 
+(** Whether a currency is a national (ISO 4217) currency or a crypto asset. *)
 module Kind : sig
   type t =
     | Fiat
@@ -25,6 +26,8 @@ module Kind : sig
   [@@deriving sexp, compare, equal, enumerate]
 end
 
+(** A registered currency. Sexp and JSON use the text form (["USDC@polygon"]); reading an
+    unregistered currency raises. *)
 type t [@@deriving sexp, compare, equal, hash, yojson]
 
 include Comparable.S with type t := t
@@ -39,6 +42,7 @@ val network : t -> string option
 (** Number of decimal digits in one major unit: 2 for EUR, 8 for BTC, 18 for ETH. *)
 val exponent : t -> int
 
+(** [Fiat] or [Crypto]. *)
 val kind : t -> Kind.t
 
 (** ["EUR"], ["USDC@polygon"]. *)
@@ -72,33 +76,61 @@ val all : unit -> t list
     [unfreeze]. Idempotent. *)
 val freeze : unit -> unit
 
+(** Whether [freeze] has been called. *)
 val is_frozen : unit -> bool
 
-(** {2 Built-in currencies} *)
+(** {2 Built-in currencies}
 
+    All 40 built-in fiat currencies are also reachable with [of_string]; these are the
+    ones used most often. *)
+
+(** Euro, 2 digits. *)
 val eur : t
+
+(** US dollar, 2 digits. *)
 val usd : t
+
+(** Pound sterling, 2 digits. *)
 val gbp : t
+
+(** Swiss franc, 2 digits. *)
 val chf : t
+
+(** Japanese yen, 0 digits. *)
 val jpy : t
+
+(** Bitcoin on chain, 8 digits (satoshis). *)
 val btc : t
 
 (** Bitcoin on Lightning, with an exponent of 11: Lightning amounts are counted in
     millisatoshis. *)
 val btc_lightning : t
 
+(** Ether, 18 digits (wei). *)
 val eth : t
 
-(** USDC and USDT without a network tag: held off-chain, e.g. at an exchange. *)
+(** USDC without a network tag, 6 digits: held off-chain, e.g. at an exchange. *)
 val usdc : t
 
+(** USDT without a network tag, 6 digits. *)
 val usdt : t
+
+(** [USDC@ethereum], 6 digits. *)
 val usdc_ethereum : t
+
+(** [USDC@polygon], 6 digits. *)
 val usdc_polygon : t
+
+(** [USDC@solana], 6 digits. *)
 val usdc_solana : t
+
+(** [USDT@ethereum], 6 digits. *)
 val usdt_ethereum : t
+
+(** [USDT@tron], 6 digits. *)
 val usdt_tron : t
 
+(** Versioned serializers whose bin_prot shape never changes. *)
 module Stable : sig
   module V1 : sig
     (** Serialized as the text form; reading an unregistered currency fails. *)
