@@ -86,6 +86,11 @@ val mul_ratio : ?rounding:Rounding.t -> t -> Q.t -> t
 (** [mul_bps t ~bps] is [t * bps / 10_000], rounded like [mul_ratio]. *)
 val mul_bps : ?rounding:Rounding.t -> t -> bps:int -> t
 
+(** [mul_bps_q t ~bps] is [mul_bps] for a fractional number of basis points, e.g.
+    [Q.of_ints 1 2] for half a basis point or [Q.of_string "2.75"]. The product is exact
+    and rounded once, like [mul_ratio]. *)
+val mul_bps_q : ?rounding:Rounding.t -> t -> bps:Q.t -> t
+
 (** {2 Allocation}
 
     Dividing an amount without creating or losing a minor unit. The parts always sum to

@@ -135,6 +135,8 @@ let mul_bps ?rounding t ~bps =
   mul_ratio ?rounding t (Q.make (Z.of_int bps) (Z.of_int 10_000))
 ;;
 
+let mul_bps_q ?rounding t ~bps = mul_ratio ?rounding t (Q.div bps (Q.of_int 10_000))
+
 let allocate t ~ratios =
   let total = List.fold ratios ~init:Z.zero ~f:(fun acc r -> Z.add acc (Z.of_int r)) in
   if List.is_empty ratios
