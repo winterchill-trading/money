@@ -18,6 +18,13 @@ Fees round down when payable and up when receivable:
   $ money fee "5000.00 EUR" -bps 150 -max 25
   25.00 EUR
 
+Fractional basis points are exact:
+
+  $ money fee "1000.00 EUR" -bps 0.5
+  0.05 EUR
+  $ money fee "1000.00 EUR" -bps 1/3 -side payable
+  0.03 EUR
+
 Bad input is rejected, never rounded away:
 
   $ money convert "1.234 EUR" -to USD -price 1 2>&1 | head -3
