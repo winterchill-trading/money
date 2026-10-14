@@ -24,39 +24,12 @@ let create ~base ~quote ~price ~at ~source =
 ;;
 
 let price_of_string s =
-  let fail () = Or_error.error_s [%message "rate: malformed price" s] in
-  let digits x = (not (String.is_empty x)) && String.for_all x ~f:Char.is_digit in
-  match String.lsplit2 s ~on:'/' with
-  | Some (n, d) ->
-    if digits n && digits d && not (String.for_all d ~f:(Char.equal '0'))
-    then Ok (Q.make (Z.of_string n) (Z.of_string d))
-    else fail ()
-  | None ->
-    (match String.lsplit2 s ~on:'.' with
-     | None -> if digits s then Ok (Q.of_bigint (Z.of_string s)) else fail ()
-     | Some (i, f) ->
-       if digits i && digits f
-       then Ok (Q.make (Z.of_string (i ^ f)) (Z.pow (Z.of_int 10) (String.length f)))
-       else fail ())
+  match Decimal_text.q_of_string s with
+  | Some q -> Ok q
+  | None -> Or_error.error_s [%message "rate: malformed price" s]
 ;;
 
-(* A reduced fraction has a terminating decimal exactly when its denominator is
-   [2^a * 5^b]; it then needs [max a b] fractional digits. *)
-let price_to_string q =
-  let rec strip d p n =
-    if Z.(equal (rem d p) zero) then strip Z.(d / p) p (n + 1) else d, n
-  in
-  let num = Q.num q
-  and den = Q.den q in
-  let rest, twos = strip den (Z.of_int 2) 0 in
-  let rest, fives = strip rest (Z.of_int 5) 0 in
-  if not (Z.equal rest Z.one)
-  then Z.to_string num ^ "/" ^ Z.to_string den
-  else (
-    let k = Int.max twos fives in
-    let units = Z.(num * pow (of_int 10) k / den) in
-    Decimal_text.to_string units ~digits:k)
-;;
+let price_to_string = Decimal_text.q_to_string
 
 let convert ?rounding t amount =
   if not (Currency.equal (Amount.currency amount) t.base)
