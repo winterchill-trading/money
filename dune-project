@@ -45,6 +45,27 @@
   (zarith
    (>= 1.12))
   fixed-decimal
+  (odoc :with-doc)))
+
+(package
+ (name money-cli)
+ (synopsis "Command-line tool for exact currency conversion and fees")
+ (description
+  "The money command converts an amount at an exact price, computes a fee schedule (fixed part, basis points, minimum and maximum, rounded by side) and lists the registered currencies. Built on the money library.")
+ (tags
+  (money currency cli oxcaml))
+ (depends
+  (ocaml-variants
+   (and
+    (>= 5.2.0+ox)
+    (< 5.2.1~)))
+  dune
+  (money
+   (= :version))
+  (core
+   (>= v0.18~preview))
   (core_unix
+   (>= v0.18~preview))
+  (ppx_jane
    (>= v0.18~preview))
   (odoc :with-doc)))

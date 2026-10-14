@@ -1,7 +1,7 @@
 (executable
  (name main)
  (public_name money)
- (package money)
- (libraries core core_unix.command_unix money zarith)
+ (package money-cli)
+ (libraries core core_unix.command_unix money)
  (preprocess
   (pps ppx_jane)))

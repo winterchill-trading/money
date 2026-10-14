@@ -20,7 +20,6 @@ depends: [
   "yojson" {>= "2.0.0"}
   "zarith" {>= "1.12"}
   "fixed-decimal"
-  "core_unix" {>= "v0.18~preview"}
   "odoc" {with-doc}
 ]
 build: [

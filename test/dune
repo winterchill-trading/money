@@ -8,4 +8,5 @@
   (pps ppx_jane)))
 
 (cram
+ (package money-cli)
  (deps %{bin:money}))
