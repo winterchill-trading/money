@@ -36,13 +36,19 @@ let make_id ~code ~network =
   | Some network -> code ^ "@" ^ network
 ;;
 
-(* An immutable map behind an atomic reference: readers never lock and always see a
-   complete map, writers publish a new map with compare-and-set. Safe across domains and
-   systhreads. *)
-let registry : t String.Map.t Stdlib.Atomic.t = Stdlib.Atomic.make String.Map.empty
+(* An immutable snapshot behind an atomic reference: readers never lock and always see a
+   complete map, writers publish a new snapshot with compare-and-set. Safe across domains
+   and systhreads. [frozen] lives in the same snapshot so a registration racing with
+   [freeze] either lands before it or fails. *)
+type registry =
+  { by_id : t String.Map.t
+  ; frozen : bool
+  }
+
+let registry = Stdlib.Atomic.make { by_id = String.Map.empty; frozen = false }
 
 let of_string_or_error s =
-  match Map.find (Stdlib.Atomic.get registry) s with
+  match Map.find (Stdlib.Atomic.get registry).by_id s with
   | Some t -> Ok t
   | None -> Or_error.error_s [%message "unknown currency" s]
 ;;
@@ -94,7 +100,7 @@ let register ~code ?network ~exponent ~kind () =
   let t = { id; code; network; exponent; kind } in
   let rec publish () =
     let current = Stdlib.Atomic.get registry in
-    match Map.find current id with
+    match Map.find current.by_id id with
     | Some existing ->
       if Int.equal existing.exponent exponent && Kind.equal existing.kind kind
       then Ok existing
@@ -105,15 +111,26 @@ let register ~code ?network ~exponent ~kind () =
               id
               ~registered_exponent:(existing.exponent : int)
               ~registered_kind:(existing.kind : Kind.t)]
+    | None when current.frozen ->
+      Or_error.error_s [%message "currency registry is frozen" id]
     | None ->
-      if Stdlib.Atomic.compare_and_set registry current (Map.set current ~key:id ~data:t)
-      then Ok t
-      else publish ()
+      let next = { current with by_id = Map.set current.by_id ~key:id ~data:t } in
+      if Stdlib.Atomic.compare_and_set registry current next then Ok t else publish ()
   in
   publish ()
 ;;
 
-let all () = Map.data (Stdlib.Atomic.get registry)
+let all () = Map.data (Stdlib.Atomic.get registry).by_id
+
+let rec freeze () =
+  let current = Stdlib.Atomic.get registry in
+  if not current.frozen
+  then
+    if not (Stdlib.Atomic.compare_and_set registry current { current with frozen = true })
+    then freeze ()
+;;
+
+let is_frozen () = (Stdlib.Atomic.get registry).frozen
 
 let builtin ~code ?network ~exponent kind =
   Or_error.ok_exn (register ~code ?network ~exponent ~kind ())
