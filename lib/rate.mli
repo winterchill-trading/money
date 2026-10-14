@@ -8,6 +8,7 @@
 
 open! Core
 
+(** A validated rate. [t_of_sexp] validates like [create] and raises on failure. *)
 type t [@@deriving sexp, compare, equal]
 
 (** Fails unless [price] is positive and [base] differs from [quote]. *)
@@ -25,10 +26,19 @@ val price_of_string : string -> Q.t Or_error.t
 (** The decimal form when it terminates, the reduced fraction otherwise. *)
 val price_to_string : Q.t -> string
 
+(** The currency being priced. *)
 val base : t -> Currency.t
+
+(** The currency the price is in. *)
 val quote : t -> Currency.t
+
+(** Units of [quote] per one unit of [base], always positive. *)
 val price : t -> Q.t
+
+(** When the rate was quoted. *)
 val at : t -> Time_ns.t
+
+(** Free text naming where the rate came from. *)
 val source : t -> string
 
 (** [convert t amount] turns an amount of [base] into [quote], rounding once to the quote
@@ -39,9 +49,11 @@ val convert : ?rounding:Rounding.t -> t -> Amount.t -> Amount.t Or_error.t
 val inverse : t -> t
 
 (** JSON object with every number as a string and the time in ISO 8601 UTC:
-    [{"base":"EUR","quote":"USD","price":"1.0845","at":"...Z","source":"..."}]. *)
+    [{"base":"EUR","quote":"USD","price":"1.0845","at":"...Z","source":"..."}].
+    [t_of_yojson] validates like [create] and raises on failure. *)
 include Ppx_yojson_conv_lib.Yojsonable.S with type t := t
 
+(** Versioned serializers whose bin_prot shape never changes. *)
 module Stable : sig
   module V1 : sig
     type nonrec t = t [@@deriving bin_io, sexp, compare, equal]
